@@ -6,6 +6,7 @@ import {
 	INodePropertyOptions,
 	INodeType,
 	INodeTypeDescription,
+	NodeOperationError,
 } from 'n8n-workflow';
 
 import { fetchUrlText } from './actions/FetchUrlText.operation';
@@ -32,13 +33,18 @@ export class Sapience implements INodeType {
 		name: 'sapience',
 		group: ['transform'],
 		version: 1,
+		usableAsTool: true,
+		subtitle: '={{ $parameter["operation"] + ": " + $parameter["resource"] }}',
 		description: 'Sapience API integration',
 		defaults: {
 			name: 'Sapience',
 		},
 		inputs: ['main'],
 		outputs: ['main'],
-		icon: { light: 'file:sapience.svg', dark: 'file:sapience.svg' },
+		icon: {
+			light: 'file:sapience.svg',
+			dark: 'file:sapience-white.svg',
+		},
 
 		credentials: [
 			{
@@ -49,18 +55,19 @@ export class Sapience implements INodeType {
 
 		properties: [
 			// =========================
-			// RESOURCE (Telegram-style sections)
+			// RESOURCE
 			// =========================
 			{
 				displayName: 'Resource',
 				name: 'resource',
 				type: 'options',
+				noDataExpression: true,
 				default: 'utilities',
 				options: [
-					{ name: 'Utilities', value: 'utilities' },
 					{ name: 'Agent', value: 'agent' },
-					{ name: 'Files', value: 'files' },
+					{ name: 'File', value: 'files' },
 					{ name: 'Object', value: 'object' },
+					{ name: 'Utility', value: 'utilities' },
 				],
 			},
 
@@ -71,6 +78,7 @@ export class Sapience implements INodeType {
 				displayName: 'Operation',
 				name: 'operation',
 				type: 'options',
+				noDataExpression: true,
 				default: 'fetchUrlText',
 				displayOptions: {
 					show: { resource: ['utilities'] },
@@ -79,12 +87,12 @@ export class Sapience implements INodeType {
 					{
 						name: 'Fetch URL Text',
 						value: 'fetchUrlText',
-						action: 'Fetch URL Text',
+						action: 'Fetch url text',
 					},
 					{
 						name: 'Convert Video To Transcript',
 						value: 'convertVideoToTranscript',
-						action: 'Convert Video To Transcript',
+						action: 'Convert video to transcript',
 					},
 				],
 			},
@@ -96,6 +104,7 @@ export class Sapience implements INodeType {
 				displayName: 'Operation',
 				name: 'operation',
 				type: 'options',
+				noDataExpression: true,
 				default: 'agentResponse',
 				displayOptions: {
 					show: { resource: ['agent'] },
@@ -104,7 +113,7 @@ export class Sapience implements INodeType {
 					{
 						name: 'Get Agents List',
 						value: 'getAgentsList',
-						action: 'Get Agents List',
+						action: 'Get agents list',
 					},
 					{
 						name: 'Agent Response',
@@ -121,6 +130,7 @@ export class Sapience implements INodeType {
 				displayName: 'Operation',
 				name: 'operation',
 				type: 'options',
+				noDataExpression: true,
 				default: 'uploadFile',
 				displayOptions: {
 					show: { resource: ['files'] },
@@ -141,6 +151,7 @@ export class Sapience implements INodeType {
 				displayName: 'Operation',
 				name: 'operation',
 				type: 'options',
+				noDataExpression: true,
 				default: 'listMeta',
 				displayOptions: {
 					show: { resource: ['object'] },
@@ -149,7 +160,7 @@ export class Sapience implements INodeType {
 					{
 						name: 'List Meta',
 						value: 'listMeta',
-						action: 'List Meta',
+						action: 'List meta',
 					},
 					{
 						name: 'Create',
@@ -177,9 +188,7 @@ export class Sapience implements INodeType {
 	// =========================
 	methods = {
 		loadOptions: {
-			async getAgents(
-				this: ILoadOptionsFunctions,
-			): Promise<INodePropertyOptions[]> {
+			async getAgents(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const { accessToken, baseUrl } = await getAccessToken.call(this);
 
 				const agentsResponse = (await this.helpers.httpRequest({
@@ -202,7 +211,7 @@ export class Sapience implements INodeType {
 					name:
 						(agent.name as string) ||
 						(agent.unique_id as string) ||
-						`Agent ${agent.id}`,
+						`Agent ${(agent.id as number | string).toString()}`,
 					value:
 						(agent.unique_id as string) ||
 						(agent.id as number | string).toString(),
@@ -210,9 +219,7 @@ export class Sapience implements INodeType {
 				}));
 			},
 
-			async getProjects(
-				this: ILoadOptionsFunctions,
-			): Promise<INodePropertyOptions[]> {
+			async getProjects(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const { accessToken, baseUrl } = await getAccessToken.call(this);
 
 				const res = (await this.helpers.httpRequest({
@@ -239,37 +246,36 @@ export class Sapience implements INodeType {
 					description: `Type: ${(p.metadata_type as string) || 'project'}`,
 				}));
 			},
+
+			async getGoals(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const { accessToken, baseUrl } = await getAccessToken.call(this);
+
+				const res = (await this.helpers.httpRequest({
+					method: 'GET',
+					url: `${baseUrl}/api/v2/sapience/list-meta`,
+					headers: {
+						Authorization: `Bearer ${accessToken}`,
+						Accept: 'application/json',
+					},
+					qs: {
+						metadata_type: 'goal',
+						limit: 200,
+						include_deleted: false,
+						include_counts: false,
+					},
+					json: true,
+				})) as IDataObject;
+
+				const data = (res.data as IDataObject[]) || [];
+
+				return data.map((g) => ({
+					name: (g.display_name as string) || (g.uid as string),
+					value: g.uid as string,
+					description: `Type: ${(g.metadata_type as string) || 'goal'}`,
+				}));
+			},
 		},
 	};
-
-	async getGoals(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
-	const { accessToken, baseUrl } = await getAccessToken.call(this);
-
-	const res = (await this.helpers.httpRequest({
-		method: 'GET',
-		url: `${baseUrl}/api/v2/sapience/list-meta`,
-		headers: {
-			Authorization: `Bearer ${accessToken}`,
-			Accept: 'application/json',
-		},
-		qs: {
-			metadata_type: 'goal',
-			limit: 200,
-			include_deleted: false,
-			include_counts: false,
-		},
-		json: true,
-	})) as IDataObject;
-
-	const data = (res.data as IDataObject[]) || [];
-
-	return data.map((g) => ({
-		name: (g.display_name as string) || (g.uid as string),
-		value: g.uid as string,
-		description: `Type: ${(g.metadata_type as string) || 'goal'}`,
-	}));
-}
-
 
 	// =========================
 	// EXECUTION
@@ -313,7 +319,7 @@ export class Sapience implements INodeType {
 					break;
 
 				default:
-					throw new Error(`Unknown operation: ${operation}`);
+					throw new NodeOperationError(this.getNode(), `Unknown operation: ${operation}`);
 			}
 
 			returnData.push(...opResult);

@@ -1,5 +1,6 @@
 import { INodeProperties } from 'n8n-workflow';
 
+
 export const createObjectProperties: INodeProperties[] = [
 	// =========================
 	// CORE
@@ -9,15 +10,19 @@ export const createObjectProperties: INodeProperties[] = [
 		name: 'metadataType',
 		type: 'options',
 		default: 'page',
+		noDataExpression: true,
+		// Alphabetized by name (required by lint)
 		options: [
+			{ name: 'Folder', value: 'folder' },
+			{ name: 'Generic', value: 'generic' },
+			{ name: 'Goal', value: 'goal' },
 			{ name: 'Page', value: 'page' },
 			{ name: 'Project', value: 'project' },
-			{ name: 'Folder', value: 'folder' },
 			{ name: 'Task', value: 'task' },
-			{ name: 'Goal', value: 'goal' },
-			{ name: 'Generic', value: 'generic' },
 		],
-		displayOptions: { show: { resource: ['object'], operation: ['createObject'] } },
+		displayOptions: {
+			show: { resource: ['object'], operation: ['createObject'] },
+		},
 	},
 
 	{
@@ -26,7 +31,10 @@ export const createObjectProperties: INodeProperties[] = [
 		type: 'string',
 		required: true,
 		default: '',
-		displayOptions: { show: { resource: ['object'], operation: ['createObject'] } },
+		displayOptions: {
+			show: { resource: ['object'], operation: ['createObject'] },
+		},
+		description: 'The display name for the object',
 	},
 
 	{
@@ -34,13 +42,17 @@ export const createObjectProperties: INodeProperties[] = [
 		name: 'scope',
 		type: 'options',
 		default: 'user',
+		noDataExpression: true,
 		options: [
-			{ name: 'User', value: 'user' },
-			{ name: 'Team', value: 'team' },
-			{ name: 'Org', value: 'org' },
 			{ name: 'Global', value: 'global' },
+			{ name: 'Org', value: 'org' },
+			{ name: 'Team', value: 'team' },
+			{ name: 'User', value: 'user' },
 		],
-		displayOptions: { show: { resource: ['object'], operation: ['createObject'] } },
+		displayOptions: {
+			show: { resource: ['object'], operation: ['createObject'] },
+		},
+		description: 'The scope for the object',
 	},
 
 	{
@@ -49,22 +61,32 @@ export const createObjectProperties: INodeProperties[] = [
 		type: 'number',
 		default: 1,
 		typeOptions: { minValue: 1, maxValue: 10, numberPrecision: 0 },
-		displayOptions: { show: { resource: ['object'], operation: ['createObject'] } },
+		noDataExpression: true,
+		displayOptions: {
+			show: { resource: ['object'], operation: ['createObject'] },
+		},
+		description: 'The schema version to use',
 	},
 
 	// =========================
 	// PAGE
 	// =========================
 	{
-		displayName: 'Parent Project',
+		displayName: 'Parent Project Name or ID',
 		name: 'parentProjectUid',
 		type: 'options',
-		typeOptions: { loadOptionsMethod: 'getProjects' },
 		default: '',
-		displayOptions: {
-			show: { resource: ['object'], operation: ['createObject'], metadataType: ['page'] },
-		},
 		required: true,
+		typeOptions: { loadOptionsMethod: 'getProjects' },
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['object'],
+				operation: ['createObject'],
+				metadataType: ['page'],
+			},
+		},
+		description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 	},
 
 	{
@@ -73,14 +95,19 @@ export const createObjectProperties: INodeProperties[] = [
 		type: 'options',
 		required: true,
 		default: 'document',
+		noDataExpression: true,
 		options: [
 			{ name: 'Document', value: 'document' },
-			{ name: 'URL', value: 'url' },
 			{ name: 'File', value: 'file' },
 			{ name: 'Synthetic', value: 'synthetic' },
+			{ name: 'URL', value: 'url' },
 		],
 		displayOptions: {
-			show: { resource: ['object'], operation: ['createObject'], metadataType: ['page'] },
+			show: {
+				resource: ['object'],
+				operation: ['createObject'],
+				metadataType: ['page'],
+			},
 		},
 	},
 
@@ -90,13 +117,18 @@ export const createObjectProperties: INodeProperties[] = [
 		type: 'options',
 		required: true,
 		default: 'plain',
+		noDataExpression: true,
 		options: [
-			{ name: 'Plain Text', value: 'plain' },
-			{ name: 'Markdown', value: 'markdown' },
 			{ name: 'HTML', value: 'html' },
+			{ name: 'Markdown', value: 'markdown' },
+			{ name: 'Plain Text', value: 'plain' },
 		],
 		displayOptions: {
-			show: { resource: ['object'], operation: ['createObject'], metadataType: ['page'] },
+			show: {
+				resource: ['object'],
+				operation: ['createObject'],
+				metadataType: ['page'],
+			},
 		},
 	},
 
@@ -108,8 +140,13 @@ export const createObjectProperties: INodeProperties[] = [
 		required: true,
 		default: '',
 		displayOptions: {
-			show: { resource: ['object'], operation: ['createObject'], metadataType: ['page'] },
+			show: {
+				resource: ['object'],
+				operation: ['createObject'],
+				metadataType: ['page'],
+			},
 		},
+		description: 'A description of the page',
 	},
 
 	{
@@ -126,6 +163,7 @@ export const createObjectProperties: INodeProperties[] = [
 				mbaPageType: ['document'],
 			},
 		},
+		description: 'The content for the page',
 	},
 
 	// =========================
@@ -140,7 +178,7 @@ export const createObjectProperties: INodeProperties[] = [
 		displayOptions: {
 			show: { resource: ['object'], operation: ['createObject'], metadataType: ['project'] },
 		},
-		description: 'Required: project.name',
+		description: 'The name of the project',
 	},
 
 	{
@@ -153,7 +191,7 @@ export const createObjectProperties: INodeProperties[] = [
 		displayOptions: {
 			show: { resource: ['object'], operation: ['createObject'], metadataType: ['project'] },
 		},
-		description: 'Required: project.goal',
+		description: 'The goal for the project',
 	},
 
 	{
@@ -165,7 +203,7 @@ export const createObjectProperties: INodeProperties[] = [
 		displayOptions: {
 			show: { resource: ['object'], operation: ['createObject'], metadataType: ['project'] },
 		},
-		description: 'Required: project.owner_username',
+		description: 'The username of the project owner',
 	},
 
 	// =========================
@@ -180,7 +218,6 @@ export const createObjectProperties: INodeProperties[] = [
 		displayOptions: {
 			show: { resource: ['object'], operation: ['createObject'], metadataType: ['folder'] },
 		},
-		description: 'Required: folder.folder_name',
 	},
 
 	{
@@ -192,7 +229,7 @@ export const createObjectProperties: INodeProperties[] = [
 		displayOptions: {
 			show: { resource: ['object'], operation: ['createObject'], metadataType: ['folder'] },
 		},
-		description: 'Required: folder.path (copy format from an existing folder if unsure)',
+		description: 'The folder path',
 	},
 
 	// =========================
@@ -207,7 +244,7 @@ export const createObjectProperties: INodeProperties[] = [
 		displayOptions: {
 			show: { resource: ['object'], operation: ['createObject'], metadataType: ['task'] },
 		},
-		description: 'Required: task.creator_username',
+		description: 'The username of the task creator',
 	},
 
 	{
@@ -215,23 +252,25 @@ export const createObjectProperties: INodeProperties[] = [
 		name: 'taskProjectSource',
 		type: 'options',
 		default: 'fromList',
+		noDataExpression: true,
 		options: [
-			{ name: 'From List', value: 'fromList' },
 			{ name: 'By ID', value: 'byId' },
+			{ name: 'From List', value: 'fromList' },
 		],
 		displayOptions: {
 			show: { resource: ['object'], operation: ['createObject'], metadataType: ['task'] },
 		},
-		description: 'Required: task.project_uid',
+		description: 'How to specify the project',
 	},
 
 	{
-		displayName: 'Project',
+		displayName: 'Project Name or ID',
 		name: 'taskProjectUid',
 		type: 'options',
 		default: '',
 		required: true,
 		typeOptions: { loadOptionsMethod: 'getProjects' },
+		noDataExpression: true,
 		displayOptions: {
 			show: {
 				resource: ['object'],
@@ -240,10 +279,11 @@ export const createObjectProperties: INodeProperties[] = [
 				taskProjectSource: ['fromList'],
 			},
 		},
+		description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 	},
 
 	{
-		displayName: 'Project UID',
+		displayName: 'Project ID',
 		name: 'taskProjectUidManual',
 		type: 'string',
 		default: '',
@@ -256,6 +296,7 @@ export const createObjectProperties: INodeProperties[] = [
 				taskProjectSource: ['byId'],
 			},
 		},
+		description: 'Specify the project ID manually',
 	},
 
 	{
@@ -263,14 +304,18 @@ export const createObjectProperties: INodeProperties[] = [
 		name: 'taskParentSource',
 		type: 'options',
 		default: 'fromList',
+		noDataExpression: true,
 		options: [
-			{ name: 'From List (Project or Goal)', value: 'fromList' },
 			{ name: 'By ID', value: 'byId' },
+			{
+				name: 'From List (Project or Goal)',
+				value: 'fromList',
+			},
 		],
 		displayOptions: {
 			show: { resource: ['object'], operation: ['createObject'], metadataType: ['task'] },
 		},
-		description: 'Required: task.parent_uid (project uid or goal uid)',
+		description: 'How to specify the parent',
 	},
 
 	{
@@ -278,9 +323,10 @@ export const createObjectProperties: INodeProperties[] = [
 		name: 'taskParentType',
 		type: 'options',
 		default: 'project',
+		noDataExpression: true,
 		options: [
-			{ name: 'Project', value: 'project' },
 			{ name: 'Goal', value: 'goal' },
+			{ name: 'Project', value: 'project' },
 		],
 		displayOptions: {
 			show: {
@@ -293,12 +339,13 @@ export const createObjectProperties: INodeProperties[] = [
 	},
 
 	{
-		displayName: 'Parent Project',
+		displayName: 'Parent Project Name or ID',
 		name: 'taskParentProjectUid',
 		type: 'options',
 		default: '',
 		required: true,
 		typeOptions: { loadOptionsMethod: 'getProjects' },
+		noDataExpression: true,
 		displayOptions: {
 			show: {
 				resource: ['object'],
@@ -308,15 +355,17 @@ export const createObjectProperties: INodeProperties[] = [
 				taskParentType: ['project'],
 			},
 		},
+		description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 	},
 
 	{
-		displayName: 'Parent Goal',
+		displayName: 'Parent Goal Name or ID',
 		name: 'taskParentGoalUid',
 		type: 'options',
 		default: '',
 		required: true,
 		typeOptions: { loadOptionsMethod: 'getGoals' },
+		noDataExpression: true,
 		displayOptions: {
 			show: {
 				resource: ['object'],
@@ -326,10 +375,11 @@ export const createObjectProperties: INodeProperties[] = [
 				taskParentType: ['goal'],
 			},
 		},
+		description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 	},
 
 	{
-		displayName: 'Parent UID',
+		displayName: 'Parent ID',
 		name: 'taskParentUidManual',
 		type: 'string',
 		default: '',
@@ -342,6 +392,7 @@ export const createObjectProperties: INodeProperties[] = [
 				taskParentSource: ['byId'],
 			},
 		},
+		description: 'Specify the parent ID manually',
 	},
 
 	{
@@ -352,6 +403,6 @@ export const createObjectProperties: INodeProperties[] = [
 		displayOptions: {
 			show: { resource: ['object'], operation: ['createObject'], metadataType: ['task'] },
 		},
-		description: 'Optional. Only include if your API supports it.',
+		description: 'Optional priority value',
 	},
 ];

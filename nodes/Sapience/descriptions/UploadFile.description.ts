@@ -7,13 +7,14 @@ export const uploadFileProperties: INodeProperties[] = [
 		type: 'string',
 		default: 'data',
 		required: true,
+		noDataExpression: true,
 		displayOptions: {
 			show: {
 				resource: ['files'],
 				operation: ['uploadFile'],
 			},
 		},
-		description: 'Name of the binary property containing the file (usually "data")',
+		description: 'The name of the binary property that contains the file (usually "data")',
 	},
 	{
 		displayName: 'User Description',
@@ -21,6 +22,7 @@ export const uploadFileProperties: INodeProperties[] = [
 		type: 'string',
 		default: '',
 		required: true,
+		noDataExpression: true,
 		typeOptions: {
 			rows: 3,
 		},
@@ -30,17 +32,20 @@ export const uploadFileProperties: INodeProperties[] = [
 				operation: ['uploadFile'],
 			},
 		},
+		description: 'A description of the file for the backend to store alongside it',
 	},
 	{
 		displayName: 'Should Parse File',
 		name: 'shouldParseFile',
 		type: 'boolean',
 		default: false,
+		noDataExpression: true,
 		displayOptions: {
 			show: {
 				resource: ['files'],
 				operation: ['uploadFile'],
 			},
 		},
+		description: 'Whether the backend should parse the file after uploading it',
 	},
 ];

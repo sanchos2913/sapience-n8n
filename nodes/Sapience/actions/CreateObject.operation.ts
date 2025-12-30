@@ -1,10 +1,7 @@
-import { IExecuteFunctions, IDataObject } from 'n8n-workflow';
+import { IExecuteFunctions, IDataObject, NodeApiError, NodeOperationError } from 'n8n-workflow';
 import { getAccessToken } from '../helpers/token';
 
-export async function createObject(
-	this: IExecuteFunctions,
-	i: number,
-): Promise<IDataObject[]> {
+export async function createObject(this: IExecuteFunctions, i: number): Promise<IDataObject[]> {
 	const { accessToken, baseUrl } = await getAccessToken.call(this);
 
 	const metadataType = this.getNodeParameter('metadataType', i) as string;
@@ -96,12 +93,10 @@ export async function createObject(
 
 		// Project UID (required)
 		const projectSource = this.getNodeParameter('taskProjectSource', i) as string;
-		let projectUid = '';
-		if (projectSource === 'fromList') {
-			projectUid = this.getNodeParameter('taskProjectUid', i) as string;
-		} else {
-			projectUid = this.getNodeParameter('taskProjectUidManual', i) as string;
-		}
+		const projectUid =
+			projectSource === 'fromList'
+				? (this.getNodeParameter('taskProjectUid', i) as string)
+				: (this.getNodeParameter('taskProjectUidManual', i) as string);
 
 		// Parent UID (required) - can be project or goal
 		const parentSource = this.getNodeParameter('taskParentSource', i) as string;
@@ -110,11 +105,10 @@ export async function createObject(
 			parentUid = this.getNodeParameter('taskParentUidManual', i) as string;
 		} else {
 			const parentType = this.getNodeParameter('taskParentType', i) as string;
-			if (parentType === 'project') {
-				parentUid = this.getNodeParameter('taskParentProjectUid', i) as string;
-			} else {
-				parentUid = this.getNodeParameter('taskParentGoalUid', i) as string;
-			}
+			parentUid =
+				parentType === 'project'
+					? (this.getNodeParameter('taskParentProjectUid', i) as string)
+					: (this.getNodeParameter('taskParentGoalUid', i) as string);
 		}
 
 		const priority = this.getNodeParameter('taskPriority', i, '') as string;
@@ -125,19 +119,19 @@ export async function createObject(
 		body.parent_uid = parentUid;
 		if (priority) body.priority = priority;
 
-		body.task = {
+		const task: IDataObject = {
 			creator_username: creatorUsername,
 			project_uid: projectUid,
 			parent_uid: parentUid,
 		};
 
-		if (priority) {
-			(body.task as IDataObject).priority = priority;
-		}
+		if (priority) task.priority = priority;
+
+		body.task = task;
 	}
 
-	const requestOptions: any = {
-		method: 'POST',
+	const requestOptions = {
+		method: 'POST' as const,
 		url: `${baseUrl}/api/v2/sapience/create`,
 		headers: {
 			Authorization: `Bearer ${accessToken}`,
@@ -150,13 +144,26 @@ export async function createObject(
 
 	try {
 		const response = await this.helpers.httpRequest(requestOptions);
-		return [response as IDataObject];
-	} catch (err: any) {
-		const status = err?.response?.status;
-		const data = err?.response?.data;
 
-		throw new Error(
-			`Create Object failed (${status}). Response: ${JSON.stringify(data)}. Sent body: ${JSON.stringify(body)}`,
-		);
+		// With json:true, response is typically an object already
+		if (typeof response === 'object' && response !== null) {
+			return [response as IDataObject];
+		}
+
+		return [{ raw: response } as IDataObject];
+	} catch (error: unknown) {
+		// If you prefer NodeApiError and your typings allow it, use it.
+		// Some n8n-workflow versions type NodeApiError more strictly.
+		try {
+			throw new NodeApiError(this.getNode(), error as never);
+		} catch {
+			// Fallback: always valid
+			throw new NodeOperationError(this.getNode(), 'Create Object failed', {
+				description: JSON.stringify({
+					error,
+					sentBody: body,
+				}),
+			});
+		}
 	}
 }

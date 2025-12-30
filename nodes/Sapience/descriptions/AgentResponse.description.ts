@@ -6,10 +6,19 @@ export const agentResponseProperties: INodeProperties[] = [
 		name: 'agentSource',
 		type: 'options',
 		options: [
-			{ name: 'From List', value: 'fromList', description: 'Pick from list' },
-			{ name: 'By ID', value: 'byId', description: 'Enter agent UID manually' },
+			{
+				name: 'From List',
+				value: 'fromList',
+				description: 'Choose an agent from the list',
+			},
+			{
+				name: 'By ID',
+				value: 'byId',
+				description: 'Specify an agent ID manually',
+			},
 		],
 		default: 'fromList',
+		noDataExpression: true,
 		displayOptions: {
 			show: {
 				resource: ['agent'],
@@ -19,13 +28,14 @@ export const agentResponseProperties: INodeProperties[] = [
 	},
 
 	{
-		displayName: 'Agent',
+		displayName: 'Agent Name or ID',
 		name: 'agentUid',
 		type: 'options',
 		default: '',
 		typeOptions: {
 			loadOptionsMethod: 'getAgents',
 		},
+		noDataExpression: true,
 		displayOptions: {
 			show: {
 				resource: ['agent'],
@@ -33,11 +43,11 @@ export const agentResponseProperties: INodeProperties[] = [
 				agentSource: ['fromList'],
 			},
 		},
-		description: 'Select an agent from the list',
+		description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 	},
 
 	{
-		displayName: 'Agent UID',
+		displayName: 'Agent ID',
 		name: 'agentUidManual',
 		type: 'string',
 		default: '',
@@ -48,14 +58,16 @@ export const agentResponseProperties: INodeProperties[] = [
 				agentSource: ['byId'],
 			},
 		},
-		description: 'Enter the agent UID manually',
+		description: 'Specify the agent ID manually',
 	},
 
 	{
 		displayName: 'Query',
 		name: 'query',
 		type: 'string',
-		typeOptions: { rows: 4 },
+		typeOptions: {
+			rows: 4,
+		},
 		default: '',
 		required: true,
 		displayOptions: {
@@ -64,11 +76,11 @@ export const agentResponseProperties: INodeProperties[] = [
 				operation: ['agentResponse'],
 			},
 		},
-		description: 'User query to send to the agent',
+		description: 'The user query to send to the agent',
 	},
 
 	{
-		displayName: 'Conversation UID',
+		displayName: 'Conversation ID',
 		name: 'conversationUid',
 		type: 'string',
 		default: '',
@@ -78,6 +90,7 @@ export const agentResponseProperties: INodeProperties[] = [
 				operation: ['agentResponse'],
 			},
 		},
+		description: 'Optional conversation ID to continue an existing conversation',
 	},
 
 	{
@@ -91,6 +104,7 @@ export const agentResponseProperties: INodeProperties[] = [
 				operation: ['agentResponse'],
 			},
 		},
+		description: 'Optional conversation name for a new conversation',
 	},
 
 	{
@@ -104,6 +118,7 @@ export const agentResponseProperties: INodeProperties[] = [
 				operation: ['agentResponse'],
 			},
 		},
+		description: 'Response generation mode',
 	},
 
 	{
@@ -117,6 +132,7 @@ export const agentResponseProperties: INodeProperties[] = [
 				operation: ['agentResponse'],
 			},
 		},
+		description: 'Optional model override',
 	},
 
 	{
@@ -135,6 +151,7 @@ export const agentResponseProperties: INodeProperties[] = [
 				operation: ['agentResponse'],
 			},
 		},
+		description: 'Controls randomness of the response',
 	},
 
 	{
@@ -147,11 +164,13 @@ export const agentResponseProperties: INodeProperties[] = [
 			{ name: 'High', value: 'high' },
 		],
 		default: 'low',
+		noDataExpression: true,
 		displayOptions: {
 			show: {
 				resource: ['agent'],
 				operation: ['agentResponse'],
 			},
 		},
+		description: 'How much reasoning effort the model should apply',
 	},
 ];

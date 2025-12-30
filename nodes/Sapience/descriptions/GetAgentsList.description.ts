@@ -6,7 +6,8 @@ export const getAgentsListProperties: INodeProperties[] = [
 		name: 'statusFilter',
 		type: 'string',
 		default: 'active',
-		description: 'status_filter query param, default "active"',
+		noDataExpression: true,
+		description: 'Optional status filter (status_filter query parameter)',
 		displayOptions: {
 			show: {
 				resource: ['agent'],
@@ -19,8 +20,8 @@ export const getAgentsListProperties: INodeProperties[] = [
 		name: 'forceSync',
 		type: 'boolean',
 		default: false,
-		description:
-			'If true, pull from vendor before loading from DB (force_sync query param)',
+		noDataExpression: true,
+		description: 'Whether to fetch from the vendor before reading from the database (force_sync)',
 		displayOptions: {
 			show: {
 				resource: ['agent'],

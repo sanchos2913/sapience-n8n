@@ -7,8 +7,8 @@ export const fetchUrlTextProperties: INodeProperties[] = [
 		type: 'string',
 		default: '',
 		required: true,
-		description:
-			'Single URL, or multiple URLs separated by comma (,) or semicolon (;)',
+		noDataExpression: true,
+		description: 'A single URL, or multiple URLs separated by commas (,) or semicolons (;)',
 		displayOptions: {
 			show: {
 				resource: ['utilities'],
@@ -20,12 +20,13 @@ export const fetchUrlTextProperties: INodeProperties[] = [
 		displayName: 'Engine',
 		name: 'engine',
 		type: 'options',
+		noDataExpression: true,
 		options: [
 			{ name: 'Trafilatura', value: 'trafilatura' },
 			{ name: 'BeautifulSoup', value: 'beautifulsoup' },
 		],
 		default: 'trafilatura',
-		description: 'Extraction engine to use',
+		description: 'The extraction engine to use',
 		displayOptions: {
 			show: {
 				resource: ['utilities'],
@@ -34,11 +35,12 @@ export const fetchUrlTextProperties: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Save As File Too',
+		displayName: 'Save as File Too',
 		name: 'shouldSaveAsFileToo',
 		type: 'boolean',
+		noDataExpression: true,
 		default: false,
-		description: 'Whether the backend should also save the text as a file',
+		description: 'Whether the backend should also save the extracted text as a file',
 		displayOptions: {
 			show: {
 				resource: ['utilities'],

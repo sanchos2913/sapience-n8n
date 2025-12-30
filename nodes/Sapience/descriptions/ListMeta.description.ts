@@ -6,14 +6,16 @@ export const listMetaProperties: INodeProperties[] = [
 		name: 'metadataType',
 		type: 'options',
 		default: 'all',
+		noDataExpression: true,
+		// Alphabetized by name
 		options: [
 			{ name: 'All', value: 'all' },
 			{ name: 'Folder', value: 'folder' },
+			{ name: 'Generic', value: 'generic' },
+			{ name: 'Goal', value: 'goal' },
 			{ name: 'Page', value: 'page' },
 			{ name: 'Project', value: 'project' },
 			{ name: 'Task', value: 'task' },
-			{ name: 'Goal', value: 'goal' },
-			{ name: 'Generic', value: 'generic' },
 		],
 		displayOptions: {
 			show: {
@@ -21,7 +23,7 @@ export const listMetaProperties: INodeProperties[] = [
 				operation: ['listMeta'],
 			},
 		},
-		description: 'Filter returned objects by metadata type (or choose All)',
+		description: 'Filter returned objects by metadata type',
 	},
 	{
 		displayName: 'Limit',
@@ -32,39 +34,42 @@ export const listMetaProperties: INodeProperties[] = [
 			maxValue: 2000,
 			numberPrecision: 0,
 		},
-		default: 200,
+		default: 50,
+		noDataExpression: true,
 		displayOptions: {
 			show: {
 				resource: ['object'],
 				operation: ['listMeta'],
 			},
 		},
-		description: 'Maximum number of objects to return',
+		description: 'Max number of results to return',
 	},
 	{
 		displayName: 'Include Deleted',
 		name: 'includeDeleted',
 		type: 'boolean',
 		default: false,
+		noDataExpression: true,
 		displayOptions: {
 			show: {
 				resource: ['object'],
 				operation: ['listMeta'],
 			},
 		},
-		description: 'Include soft-deleted objects',
+		description: 'Whether to include soft-deleted objects',
 	},
 	{
 		displayName: 'Include Counts',
 		name: 'includeCounts',
 		type: 'boolean',
 		default: false,
+		noDataExpression: true,
 		displayOptions: {
 			show: {
 				resource: ['object'],
 				operation: ['listMeta'],
 			},
 		},
-		description: 'Include descendant counts for projects',
+		description: 'Whether to include descendant counts for projects',
 	},
 ];

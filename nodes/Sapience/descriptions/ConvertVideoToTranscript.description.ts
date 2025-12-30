@@ -7,8 +7,8 @@ export const convertVideoToTranscriptProperties: INodeProperties[] = [
 		type: 'string',
 		default: 'data',
 		required: true,
-		description:
-			'Name of the binary property that contains the video file (usually "data")',
+		noDataExpression: true,
+		description: 'The name of the binary property that contains the video file (usually "data")',
 		displayOptions: {
 			show: {
 				resource: ['utilities'],
@@ -21,6 +21,8 @@ export const convertVideoToTranscriptProperties: INodeProperties[] = [
 		name: 'model',
 		type: 'string',
 		default: 'gpt-4o-transcribe',
+		noDataExpression: true,
+		description: 'The transcription model to use',
 		displayOptions: {
 			show: {
 				resource: ['utilities'],
@@ -33,6 +35,8 @@ export const convertVideoToTranscriptProperties: INodeProperties[] = [
 		name: 'language',
 		type: 'string',
 		default: 'en',
+		noDataExpression: true,
+		description: 'The language code for the transcription (for example, "en")',
 		displayOptions: {
 			show: {
 				resource: ['utilities'],
