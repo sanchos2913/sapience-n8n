@@ -41,10 +41,6 @@
     ],
     "nodes": [
       "dist/nodes/GithubIssues/GithubIssues.node.js",
-      "dist/nodes/Example/Example.node.js",
-      "dist/nodes/SapienceToken/SapienceToken.node.js",
-      "dist/nodes/SapienceFetchUrlText/SapienceFetchUrlText.node.js",
-      "dist/nodes/SapienceAgentResponse/SapienceAgentResponse.node.js",
       "dist/nodes/Sapience/Sapience.node.js"
     ]
   },
