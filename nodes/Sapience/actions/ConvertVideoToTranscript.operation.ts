@@ -1,68 +1,95 @@
-import { IExecuteFunctions, IDataObject, NodeOperationError } from 'n8n-workflow';
+import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import FormData from 'form-data';
 import { getAccessToken } from '../helpers/token';
 
-const VIDEO_TO_TEXT_PATH = '/api/v2/utilities/video-to-text';
+function safeStringify(value: unknown): string {
+	try {
+		if (typeof value === 'string') return value;
+		return JSON.stringify(value);
+	} catch {
+		return String(value);
+	}
+}
 
 export async function convertVideoToTranscript(
 	this: IExecuteFunctions,
-	i: number,
+	itemIndex: number,
 ): Promise<IDataObject[]> {
 	const { accessToken, baseUrl } = await getAccessToken.call(this);
 
-	const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
+	const items = this.getInputData() as INodeExecutionData[];
+	const item = items[itemIndex];
 
-	// Ensure binary exists
-	const binaryData = this.helpers.assertBinaryData(i, binaryPropertyName);
+	// ✅ FIX: read the parameter name you actually defined in properties
+	const binaryProperty =
+		(this.getNodeParameter('binaryPropertyName', itemIndex, 'data') as string) || 'data';
 
-	// Get file buffer
-	const videoBuffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
+	const model = (this.getNodeParameter('model', itemIndex, 'gpt-4o-transcribe') as string) || 'gpt-4o-transcribe';
+	const language = (this.getNodeParameter('language', itemIndex, 'en') as string) || 'en';
 
-	// Query params
-	const model = this.getNodeParameter('model', i, 'gpt-4o-transcribe') as string;
-	const language = this.getNodeParameter('language', i, 'en') as string;
+	const bin = item.binary?.[binaryProperty];
+	if (!bin) {
+		const available = Object.keys(item.binary ?? {}).join(', ');
+		throw new Error(
+			`No binary property "${binaryProperty}" found on item ${itemIndex}. ` +
+				`Available binary properties: [${available || 'none'}].`,
+		);
+	}
 
-	const fileName = binaryData.fileName ?? 'video.mp4';
-	const mimeType = binaryData.mimeType ?? 'application/octet-stream';
+	const buffer = await this.helpers.getBinaryDataBuffer(itemIndex, binaryProperty);
+	const fileName = bin.fileName ?? 'video.mp4';
+	const mimeType = bin.mimeType ?? 'video/mp4';
 
-	const requestOptions = {
-		method: 'POST' as const,
-		url: `${baseUrl}${VIDEO_TO_TEXT_PATH}`,
+	// ✅ Build real multipart payload
+	const form = new FormData();
+	form.append('video_file', buffer, {
+		filename: fileName,
+		contentType: mimeType,
+		knownLength: buffer.length, // helps some servers/proxies
+	});
+
+	const url = `${baseUrl.replace(/\/$/, '')}/api/v2/utilities/video-to-text`;
+
+	const options = {
+		method: 'POST',
+		url,
+		// n8n client usually supports `qs` for querystring; if yours prefers `params`, swap it.
+		qs: { model, language },
+
+		// ✅ IMPORTANT: send the form stream as the body
+		body: form,
+
+		// ✅ IMPORTANT: include boundary headers from form-data
 		headers: {
 			Authorization: `Bearer ${accessToken}`,
 			Accept: 'application/json',
+			...form.getHeaders(),
 		},
-		qs: {
-			model,
-			language,
-		},
-		// n8n-native multipart upload
-		formData: {
-			video_file: {
-				value: videoBuffer,
-				options: {
-					filename: fileName,
-					contentType: mimeType,
-				},
-			},
-		},
-		json: true,
+
+		// ❌ Do NOT set json:true here; it can interfere with multipart in some setups
+		// json: true,
 	};
 
 	try {
-		const response = await this.helpers.httpRequest(requestOptions);
-
-		if (typeof response === 'object' && response !== null) {
-			return [response as IDataObject];
+		const response = await this.helpers.httpRequest(options as any);
+		// If the API returns JSON, n8n often already parses it; if not, handle parsing:
+		if (typeof response === 'string') {
+			try {
+				return [JSON.parse(response) as IDataObject];
+			} catch {
+				return [{ raw: response } as IDataObject];
+			}
 		}
+		return [response as IDataObject];
+	} catch (error: any) {
+		const status = error?.response?.statusCode ?? error?.statusCode ?? error?.response?.status ?? 'unknown';
+		const body = error?.response?.body ?? error?.response?.data ?? error?.body ?? error?.message ?? error;
 
-		return [{ raw: response } as IDataObject];
-	} catch (error: unknown) {
-		if (error instanceof Error) {
-			throw new NodeOperationError(this.getNode(), error.message);
-		}
-
-		throw new NodeOperationError(this.getNode(), 'Video to text transcription failed', {
-			description: JSON.stringify(error),
-		});
+		throw new Error(
+			`Sapience video-to-text failed (status ${status}). ` +
+				`binaryProperty="${binaryProperty}", filename="${fileName}", mimeType="${mimeType}", ` +
+				`model="${model}", language="${language}". ` +
+				`Response: ${safeStringify(body)}`,
+		);
 	}
 }
