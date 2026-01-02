@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-sapience",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Sapience custom nodes for n8n (agents, utilities, video transcription, fetch, token handling). Connect your sapience account to 1000+ services.",
   "license": "MIT",
   "homepage": "https://github.com/sanchos2913/sapience-n8n",
