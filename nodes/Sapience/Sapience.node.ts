@@ -16,6 +16,7 @@ import { convertVideoToTranscript } from './actions/ConvertVideoToTranscript.ope
 import { uploadFile } from './actions/UploadFile.operation';
 import { listMeta } from './actions/ListMeta.operation';
 import { createObject } from './actions/CreateObject.operation';
+import { deleteFile } from './actions/DeleteFile.operation';
 
 import { fetchUrlTextProperties } from './descriptions/FetchUrlText.description';
 import { getAgentsListProperties } from './descriptions/GetAgentsList.description';
@@ -24,6 +25,7 @@ import { convertVideoToTranscriptProperties } from './descriptions/ConvertVideoT
 import { uploadFileProperties } from './descriptions/UploadFile.description';
 import { listMetaProperties } from './descriptions/ListMeta.description';
 import { createObjectProperties } from './descriptions/CreateObject.description';
+import { deleteFileProperties } from './descriptions/DeleteFile.description';
 
 import { getAccessToken } from './helpers/token';
 
@@ -141,6 +143,11 @@ export class Sapience implements INodeType {
 						value: 'uploadFile',
 						action: 'Upload',
 					},
+					{
+						name: 'Delete',
+						value: 'deleteFile',
+						action: 'Delete file',
+					},
 				],
 			},
 
@@ -180,6 +187,7 @@ export class Sapience implements INodeType {
 			...uploadFileProperties,
 			...listMetaProperties,
 			...createObjectProperties,
+			...deleteFileProperties,
 		],
 	};
 
@@ -316,6 +324,10 @@ export class Sapience implements INodeType {
 
 				case 'createObject':
 					opResult = await createObject.call(this, i);
+					break;
+
+				case 'deleteFile':
+					opResult = await deleteFile.call(this, i);
 					break;
 
 				default:

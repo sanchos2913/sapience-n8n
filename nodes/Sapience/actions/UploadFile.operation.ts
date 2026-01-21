@@ -1,62 +1,163 @@
-import { IExecuteFunctions, IDataObject, NodeOperationError } from 'n8n-workflow';
+import {
+IExecuteFunctions,
+IDataObject,
+NodeOperationError,
+} from 'n8n-workflow';
+import type { IHttpRequestOptions } from 'n8n-workflow';
 import { getAccessToken } from '../helpers/token';
 
-const FILE_UPLOAD_PATH = '/api/files/upload';
+export async function uploadFile(
+this: IExecuteFunctions,
+i: number,
+): Promise<IDataObject[]> {
+const { accessToken, baseUrl } = await getAccessToken.call(this);
 
-export async function uploadFile(this: IExecuteFunctions, i: number): Promise<IDataObject[]> {
-	const { accessToken, baseUrl } = await getAccessToken.call(this);
+const binaryPropertyName = this.getNodeParameter(
+    'binaryPropertyName',
+    i,
+    'data',
+) as string;
+const userDescription = this.getNodeParameter('userDescription', i) as string;
+const shouldParseFile = this.getNodeParameter(
+    'shouldParseFile',
+    i,
+    false,
+) as boolean;
 
-	const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
-	const userDescriptionRaw = this.getNodeParameter('userDescription', i) as string;
-	const shouldParseFile = this.getNodeParameter('shouldParseFile', i) as boolean;
+// Get parent_uid from additional fields, default to 'root'
+const additionalFields = this.getNodeParameter('additionalFields', i, {}) as IDataObject;
+const parentUid = (additionalFields.parentUid as string) || 'root';
 
-	const userDescription = (userDescriptionRaw ?? '').trim();
-	if (!userDescription) {
-		throw new NodeOperationError(this.getNode(), 'User Description is required and cannot be empty');
-	}
+const items = this.getInputData();
+const binary = items[i].binary?.[binaryPropertyName];
 
-	const binaryData = this.helpers.assertBinaryData(i, binaryPropertyName);
-	const fileBuffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
+if (!binary) {
+    throw new NodeOperationError(
+        this.getNode(),
+        `No binary data found. Expected binary property "${binaryPropertyName}".`,
+        { itemIndex: i },
+    );
+}
 
-	const fileName = binaryData.fileName ?? 'upload.bin';
-	const mimeType = binaryData.mimeType ?? 'application/octet-stream';
+const binaryData = await this.helpers.getBinaryDataBuffer(
+    i,
+    binaryPropertyName,
+);
 
-	const requestOptions = {
-		method: 'POST' as const,
-		url: `${baseUrl}${FILE_UPLOAD_PATH}`,
-		headers: {
-			Authorization: `Bearer ${accessToken}`,
-			Accept: 'application/json',
-		},
-		formData: {
-			user_description: userDescription,
-			should_parse_file: shouldParseFile ? 'true' : 'false',
-			file: {
-				value: fileBuffer,
-				options: {
-					filename: fileName,
-					contentType: mimeType,
-				},
-			},
-		},
-		json: true,
-	};
+const fileName = (binary.fileName as string) ?? 'upload.bin';
+const mimeType = (binary.mimeType as string) ?? 'application/octet-stream';
 
-	try {
-		const response = await this.helpers.httpRequest(requestOptions);
+// Prepare the multipart form data in the format n8n's httpRequest expects
+const boundary = `----FormBoundary${Math.random().toString(36).substring(2)}`;
 
-		if (typeof response === 'object' && response !== null) {
-			return [response as IDataObject];
-		}
+const formParts: Buffer[] = [];
 
-		return [{ raw: response } as IDataObject];
-	} catch (error: unknown) {
-		if (error instanceof Error) {
-			throw new NodeOperationError(this.getNode(), error.message);
-		}
+// Add parent_uid field
+formParts.push(
+    Buffer.from(
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="parent_uid"\r\n\r\n` +
+        `${parentUid}\r\n`
+    )
+);
 
-		throw new NodeOperationError(this.getNode(), 'Upload failed', {
-			description: JSON.stringify(error),
-		});
-	}
+// Add user_description field
+formParts.push(
+    Buffer.from(
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="user_description"\r\n\r\n` +
+        `${userDescription}\r\n`
+    )
+);
+
+// Add should_parse_file field
+formParts.push(
+    Buffer.from(
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="should_parse_file"\r\n\r\n` +
+        `${String(shouldParseFile)}\r\n`
+    )
+);
+
+// Add file field
+formParts.push(
+    Buffer.from(
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="file"; filename="${fileName}"\r\n` +
+        `Content-Type: ${mimeType}\r\n\r\n`
+    )
+);
+formParts.push(binaryData);
+formParts.push(Buffer.from(`\r\n--${boundary}--\r\n`));
+
+const body = Buffer.concat(formParts);
+
+const requestOptions: IHttpRequestOptions = {
+    method: 'POST',
+    url: `${baseUrl}/api/files/upload`,
+    headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
+        'Content-Length': String(body.length),
+    },
+    body,
+    returnFullResponse: false,
+};
+
+try {
+    const response = await this.helpers.httpRequest(requestOptions);
+    
+    // Parse response if it's a string
+    let parsedResponse: IDataObject;
+    if (typeof response === 'string') {
+        try {
+            parsedResponse = JSON.parse(response) as IDataObject;
+        } catch {
+            parsedResponse = { response } as IDataObject;
+        }
+    } else {
+        parsedResponse = response as IDataObject;
+    }
+    
+    return [parsedResponse];
+} catch (error: unknown) {
+    const err = error as { 
+        cause?: {
+            response?: {
+                statusCode?: number;
+                body?: string;
+            };
+        };
+        response?: { 
+            statusCode?: number;
+            statusMessage?: string;
+            body?: string | IDataObject;
+        };
+        statusCode?: number;
+        message?: string;
+    };
+    
+    const status = err?.cause?.response?.statusCode ?? 
+                  err?.response?.statusCode ?? 
+                  err?.statusCode;
+    const responseBody = err?.cause?.response?.body ?? 
+                       err?.response?.body;
+    const errorMessage = err?.message;
+
+    let errorDetails = '';
+    if (responseBody) {
+        errorDetails = typeof responseBody === 'string' 
+            ? responseBody 
+            : JSON.stringify(responseBody);
+    } else if (errorMessage) {
+        errorDetails = errorMessage;
+    }
+
+    throw new NodeOperationError(
+        this.getNode(),
+        `Upload failed (${status ?? 'unknown'}). ${errorDetails}`,
+        { itemIndex: i },
+    );
+}
+
 }

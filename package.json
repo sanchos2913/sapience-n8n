@@ -40,7 +40,6 @@
       "dist/credentials/SapienceApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/GithubIssues/GithubIssues.node.js",
       "dist/nodes/Sapience/Sapience.node.js"
     ]
   },
