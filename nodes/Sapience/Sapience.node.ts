@@ -17,6 +17,7 @@ import { uploadFile } from './actions/UploadFile.operation';
 import { listMeta } from './actions/ListMeta.operation';
 import { createObject } from './actions/CreateObject.operation';
 import { deleteFile } from './actions/DeleteFile.operation';
+import { changeScopeFile } from './actions/ChangeScopeFile.operation';
 
 import { fetchUrlTextProperties } from './descriptions/FetchUrlText.description';
 import { getAgentsListProperties } from './descriptions/GetAgentsList.description';
@@ -26,6 +27,7 @@ import { uploadFileProperties } from './descriptions/UploadFile.description';
 import { listMetaProperties } from './descriptions/ListMeta.description';
 import { createObjectProperties } from './descriptions/CreateObject.description';
 import { deleteFileProperties } from './descriptions/DeleteFile.description';
+import { changeScopeFileProperties } from './descriptions/ChangeScopeFile.description';
 
 import { getAccessToken } from './helpers/token';
 
@@ -148,6 +150,11 @@ export class Sapience implements INodeType {
 						value: 'deleteFile',
 						action: 'Delete file',
 					},
+					{
+						name: 'Change Scope',
+						value: 'changeScopeFile',
+						action: 'Change file scope',
+						},
 				],
 			},
 
@@ -188,6 +195,7 @@ export class Sapience implements INodeType {
 			...listMetaProperties,
 			...createObjectProperties,
 			...deleteFileProperties,
+			...changeScopeFileProperties,
 		],
 	};
 
@@ -328,6 +336,10 @@ export class Sapience implements INodeType {
 
 				case 'deleteFile':
 					opResult = await deleteFile.call(this, i);
+					break;
+
+				case 'changeScopeFile':
+					opResult = await changeScopeFile.call(this, i);
 					break;
 
 				default:
