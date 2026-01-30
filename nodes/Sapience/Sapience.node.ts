@@ -18,6 +18,9 @@ import { listMeta } from './actions/ListMeta.operation';
 import { createObject } from './actions/CreateObject.operation';
 import { deleteFile } from './actions/DeleteFile.operation';
 import { changeScopeFile } from './actions/ChangeScopeFile.operation';
+import { executeSystemAgent } from './actions/ExecuteSystemAgent.operation';
+import { executeCustomSystemAgent } from './actions/ExecuteCustomSystemAgent.operation';
+
 
 import { fetchUrlTextProperties } from './descriptions/FetchUrlText.description';
 import { getAgentsListProperties } from './descriptions/GetAgentsList.description';
@@ -28,6 +31,10 @@ import { listMetaProperties } from './descriptions/ListMeta.description';
 import { createObjectProperties } from './descriptions/CreateObject.description';
 import { deleteFileProperties } from './descriptions/DeleteFile.description';
 import { changeScopeFileProperties } from './descriptions/ChangeScopeFile.description';
+import { executeSystemAgentProperties } from './descriptions/ExecuteSystemAgent.description';
+import { executeCustomSystemAgentProperties } from './descriptions/ExecuteCustomSystemAgent.description';
+
+
 
 import { getAccessToken } from './helpers/token';
 
@@ -124,6 +131,17 @@ export class Sapience implements INodeType {
 						value: 'agentResponse',
 						action: 'Response',
 					},
+					{
+						name: 'Execute System Agent',
+						value: 'executeSystemAgent',
+						action: 'Execute system agent',
+					},
+					{
+						name: 'Execute Custom System Agent',
+						value: 'executeCustomSystemAgent',
+						action: 'Execute custom system agent',
+					},
+
 				],
 			},
 
@@ -196,6 +214,8 @@ export class Sapience implements INodeType {
 			...createObjectProperties,
 			...deleteFileProperties,
 			...changeScopeFileProperties,
+			...executeSystemAgentProperties,
+			...executeCustomSystemAgentProperties,
 		],
 	};
 
@@ -341,6 +361,15 @@ export class Sapience implements INodeType {
 				case 'changeScopeFile':
 					opResult = await changeScopeFile.call(this, i);
 					break;
+
+				case 'executeSystemAgent':
+					opResult = await executeSystemAgent.call(this, i);
+					break;
+
+				case 'executeCustomSystemAgent':
+					opResult = await executeCustomSystemAgent.call(this, i);
+					break;
+
 
 				default:
 					throw new NodeOperationError(this.getNode(), `Unknown operation: ${operation}`);
